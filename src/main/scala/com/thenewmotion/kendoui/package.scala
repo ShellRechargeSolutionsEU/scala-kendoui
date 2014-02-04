@@ -1,4 +1,4 @@
-package com.thenewmotion.kendoui
+package com.thenewmotion
 
 import net.liftweb.http.Req
 
