@@ -2,8 +2,6 @@ language: scala
 scala:
   - 2.10.3
 jdk:
-  - oraclejdk8
-  - openjdk7
   - oraclejdk7
 install: /bin/true # always succeeds
 script:
