@@ -8,7 +8,7 @@
     </parent>
     <groupId>com.thenewmotion</groupId>
     <artifactId>scala-kendoui_2.10</artifactId>
-    <version>0.1</version>
+    <version>0.2-SNAPSHOT</version>
     <url>https://github.com/thenewmotion/scala-kendoui</url>
     <licenses>
         <license>
@@ -75,7 +75,7 @@
         <url>https://github.com/thenewmotion/scala-kendoui</url>
         <connection>scm:git:ssh://git@github.com/thenewmotion/scala-kendoui.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/thenewmotion/scala-kendoui.git</developerConnection>
-      <tag>scala-kendoui_2.10-0.1</tag>
+      <tag>HEAD</tag>
   </scm>
     <build>
         <plugins>
