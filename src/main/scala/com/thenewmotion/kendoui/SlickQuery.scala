@@ -33,7 +33,11 @@ class SlickQuery[AT <: AbstractTable[_]](table: AT, kq: KendoQuery)(implicit dri
     def filter(f: Filter): Option[Column[Boolean]] = tableColumn(f.field, table).map {
       column =>
         val n = Node(column)
-        val value = f.value
+        val value = f.value match {
+          case "true" => "1"
+          case "false" => "0"
+          case x => x
+        }
 
         def v = ConstColumn(value)
 
