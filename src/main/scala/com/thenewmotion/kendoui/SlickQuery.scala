@@ -6,7 +6,6 @@ import scala.slick.lifted.TypeMapper._
 import scala.slick.driver.ExtendedDriver
 import com.typesafe.scalalogging.slf4j.Logging
 import net.liftweb.http.Req
-import scala.reflect.ClassTag
 
 /**
  * @author Yaroslav Klymko
@@ -34,13 +33,10 @@ class SlickQuery[AT <: AbstractTable[_]](table: AT, kq: KendoQuery)(implicit dri
     def filter(f: Filter): Option[Column[Boolean]] = tableColumn(f.field, table).map {
       column =>
         val n = Node(column)
-
         val value = if (column.tpe == BooleanTypeMapper) {
           if (f.value == "true") "1"
           else "0"
-        } else {
-          f.value
-        }
+        } else f.value
 
         def v = ConstColumn(value)
 
