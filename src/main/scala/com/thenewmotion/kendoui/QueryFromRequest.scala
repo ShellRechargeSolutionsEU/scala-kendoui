@@ -33,13 +33,7 @@ class QueryFromRequest[T <: AnyRef](view: View[T], kq: KendoQuery) extends Loggi
     case filter@Filter(MetaData(meta), _, _) => meta -> filter
   }
 
-  def logicalBoolean(t: TypedExpressionNode[_], reqValue: String, operator: Operator.Value): LogicalBoolean = {
-
-    val value = reqValue match {
-      case "true" => "1"
-      case "false" => "0"
-      case x => x
-    }
+  def logicalBoolean(t: TypedExpressionNode[_], value: String, operator: Operator.Value): LogicalBoolean = {
 
     def dateOrNumerical = {
 
