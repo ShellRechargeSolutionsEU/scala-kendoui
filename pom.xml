@@ -8,7 +8,7 @@
     </parent>
     <groupId>com.thenewmotion</groupId>
     <artifactId>scala-kendoui_2.10</artifactId>
-    <version>0.2-SNAPSHOT</version>
+    <version>0.2</version>
     <url>https://github.com/thenewmotion/scala-kendoui</url>
     <licenses>
         <license>
