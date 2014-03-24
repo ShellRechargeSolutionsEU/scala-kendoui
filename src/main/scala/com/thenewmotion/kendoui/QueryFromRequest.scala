@@ -46,6 +46,7 @@ class QueryFromRequest[T <: AnyRef](view: View[T], kq: KendoQuery) extends Loggi
       val valueExpression: Option[TypedExpressionNode[_]] = PartialFunction.condOpt(t) {
         case _: DateExpression[_] => createTimestampFromString(value): DateExpression[_]
         case _: NumericalExpression[_] => value.toInt: NumericalExpression[_]
+        case _: BooleanExpression[_] => value.toBoolean: BooleanExpression[_]
       }
 
       def notImplemented = {
