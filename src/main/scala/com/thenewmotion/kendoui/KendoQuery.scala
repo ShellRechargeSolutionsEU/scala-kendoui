@@ -20,7 +20,7 @@ object KendoQuery {
         f <- param(s"filter[filters][$i][field]")
         v <- param(s"filter[filters][$i][value]")
         o <- param(s"filter[filters][$i][operator]")
-        oe <- Operator.parse(o)
+        oe <- Operator(o)
       } yield Filter(f, v, oe)
 
       filter match {
@@ -63,23 +63,27 @@ case class Sorter(field: String, dir: Direction.Value)
 case class Page(skip: Int, take: Int)
 
 object Operator extends Enumeration {
-  val EqualTo, NotEqualTo, LessThen, LessThenOrEqualTo, GreaterThen, GreaterThenOrEqualTo, StartsWith, EndsWith, Contains, DoesNotContain = Value
+  val
+    EqualTo, NotEqualTo,
+    LessThen, LessThenOrEqualTo,
+    GreaterThen, GreaterThenOrEqualTo,
+    StartsWith, EndsWith,
+    Contains, DoesNotContain = Value
 
-  lazy val aliases = Map(
-    EqualTo -> List("eq", "==", "isequalto", "equals", "equalto", "equal"),
-    NotEqualTo -> List("neq", "!=", "isnotequalto", "notequals", "notequalto", "notequal", "ne"),
-    LessThen -> List("lt", "<", "islessthan", "lessthan", "less"),
-    LessThenOrEqualTo -> List("lte", "<=", "islessthanorequalto", "lessthanequal", "le"),
-    GreaterThen -> List("gt", ">", "isgreaterthan", "greaterthan", "greater"),
-    GreaterThenOrEqualTo -> List("gte", ">=", "isgreaterthanorequalto", "greaterthanequal", "ge"),
-    StartsWith -> List("startswith"),
-    EndsWith -> List("endswith"),
-    Contains -> List("contains", "substringof"),
-    DoesNotContain -> List("doesnotcontain"))
+  lazy val aliases = (
+    Seq("eq", "==", "isequalto", "equals", "equalto", "equal").map(_ -> EqualTo) ++
+    Seq("neq", "!=", "isnotequalto", "notequals", "notequalto", "notequal", "ne").map(_ -> NotEqualTo) ++
+    Seq("lt", "<", "islessthan", "lessthan", "less").map(_ -> LessThen) ++
+    Seq("lte", "<=", "islessthanorequalto", "lessthanequal", "le").map(_ -> LessThenOrEqualTo) ++
+    Seq("gt", ">", "isgreaterthan", "greaterthan", "greater").map(_ -> GreaterThen) ++
+    Seq("gte", ">=", "isgreaterthanorequalto", "greaterthanequal", "ge").map(_ -> GreaterThenOrEqualTo) ++
+    Seq("startswith").map(_ -> StartsWith) ++
+    Seq("endswith").map(_ -> EndsWith) ++
+    Seq("contains", "substringof").map(_ -> Contains) ++
+    Seq("doesnotcontain").map(_ -> DoesNotContain)
+  ).toMap
 
-  def parse(s: String): Option[Value] = aliases.collectFirst {
-    case (o, xs) if xs.contains(s.toLowerCase) => o
-  }
+  def apply(s: String): Option[Value] = aliases.get(s.toLowerCase)
 }
 
 object Direction extends Enumeration {
