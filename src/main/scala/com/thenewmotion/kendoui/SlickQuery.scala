@@ -1,90 +1,63 @@
 package com.thenewmotion.kendoui
 
-import scala.slick.ast.{Node, Library, Ordering}
-import scala.slick.lifted.{NothingContainer, Shape, ColumnOrdered, AbstractTable}
-import scala.slick.lifted.TypeMapper._
-import scala.slick.driver.ExtendedDriver
-import com.typesafe.scalalogging.slf4j.Logging
-import net.liftweb.http.Req
+import scala.slick.ast._
+import scala.slick.driver.JdbcProfile
+import scala.slick.lifted._
+import Operator._
 
-/**
- * @author Yaroslav Klymko
- */
 object SlickQuery {
-  def apply[AT <: AbstractTable[_]](table: AT, req: Req)(implicit driver: ExtendedDriver): SlickQuery[AT] =
-    new SlickQuery(table, KendoQuery(req))
+  def apply[T, E <: AbstractTable[T]](q: Query[E, T, Seq])(implicit p: JdbcProfile) =
+    new SlickQuery(q)(p)
+  private val defaultPage = Page(0, 1000)
 }
 
-class SlickQuery[AT <: AbstractTable[_]](table: AT, kq: KendoQuery)(implicit driver: ExtendedDriver) extends Logging {
+class SlickQuery[T, E <: AbstractTable[T]] private(q: Query[E, T, Seq])(p: JdbcProfile) {
+  import SlickQuery._
+  import p.simple._
 
-  import driver.simple._
-  import ConstColumn.TRUE
+  private val cache = collection.mutable.Map[String, Node]()
 
-  private def tableColumn(field: String, table: AT): Option[Column[_]] =
-    try Some(table.getClass.getMethod(field).invoke(table).asInstanceOf[Column[_]]) catch {
-      case e: Exception =>
-        logger.warn(s"no column ${table.tableName}.$field")
-        None
-    }
+  private def colNode(e: E, field: String) = cache.getOrElseUpdate(field,
+    e.getClass.getDeclaredMethod(field).invoke(e)
+    .asInstanceOf[Column[_]].toNode
+  )
 
-  def query(defaultSort: AT => ColumnOrdered[_]) = table.where(filter).sortBy(sort(defaultSort))
-
-  def filter(table: AT) = {
-    def filter(f: Filter): Option[Column[Boolean]] = tableColumn(f.field, table).map {
-      column =>
-        val n = Node(column)
-        val value = if (column.tpe == BooleanTypeMapper) {
-          if (f.value == "true") "1"
-          else "0"
-        } else f.value
-
-        def v = ConstColumn(value)
-
-        import Operator._
-        f.operator match {
-          case EqualTo => Library.==.column(n, Node(v))
-          case NotEqualTo => Library.Not.column(Library.==.typed[Boolean](n, Node(v)))
-          case LessThen => Library.<.column(n, Node(v))
-          case LessThenOrEqualTo => Library.<=.column(n, Node(v))
-          case GreaterThen => Library.>.column(n, Node(v))
-          case GreaterThenOrEqualTo => Library.>=.column(n, Node(v))
-          case StartsWith => Library.Like.column(n, Node(ConstColumn(s"$value%")))
-          case EndsWith => Library.Like.column(n, Node(ConstColumn(s"%$value")))
-          case Contains => Library.Like.column(n, Node(ConstColumn(s"%$value%")))
-          case DoesNotContain => Library.Not.column(Library.Like.typed[Boolean](n, Node(ConstColumn(s"%$value%"))))
-        }
-    }
-    kq.filters.flatMap(filter).foldLeft(TRUE === TRUE)((x, y) => Library.And.column(Node(x), Node(y)))
+  private def predicate(e: E, f: Filter) = {
+    val (c, v) = (colNode(e, f.field), LiteralNode(f.value))
+    val L = Library
+    def \(fs: FunctionSymbol, nodes: Node*) = fs.typed[Boolean](nodes: _*)
+    Column.forNode[Boolean](f.operator match {
+      case EqualTo => \(L.==, c, v)
+      case NotEqualTo => \(L.Not, \(L.==, c, v))
+      case GreaterThen => \(L.>, c, v)
+      case GreaterThenOrEqualTo => \(L.>=, c, v)
+      case LessThen => \(L.<, c, v)
+      case LessThenOrEqualTo => \(L.<=, c, v)
+      case StartsWith => \(L.StartsWith, c, v)
+      case EndsWith => \(L.EndsWith, c, v)
+      case Contains => \(L.Like, c, LiteralNode(s"%${f.value}%"))
+      case DoesNotContain => \(L.Not, \(L.Like, c, LiteralNode(s"%${f.value}%")))
+    })
   }
 
-  def sort(default: AT => ColumnOrdered[_])(table: AT): ColumnOrdered[_] = {
-    def sortDir(x: Direction.Value) = x match {
-      case Direction.Asc => Ordering.Asc
-      case Direction.Desc => Ordering.Desc
+  private def ordering(e: E, s: Sorter) = {
+    val ordering = s.dir match {
+      case Direction.Asc => Ordering(Ordering.Asc)
+      case Direction.Desc => Ordering(Ordering.Desc)
     }
-    val sorter = for {
-      Sorter(field, dir) <- kq.sorter
-      column <- tableColumn(field, table)
-    } yield ColumnOrdered(column, Ordering(direction = sortDir(dir)))
-    sorter getOrElse default(table)
+    new Ordered(Seq(colNode(e, s.field) -> ordering))
   }
 
-  def dataAndCount[F, G, T](orderBy: AT => ColumnOrdered[_], countBy: AT => F)(implicit shape: Shape[F, T, G]) =
-    dataAndCountSorted(orderBy, countBy, table.where(filter))
+  def page[F, G, T](kq: KendoQuery, countBy: E => F)(implicit shape: Shape[ColumnsShapeLevel, F, T, G], session: Session) = {
 
-  def dataAndCount[F, G, T](orderBy: AT => ColumnOrdered[_],
-                            countBy: AT => F,
-                            where: AT => Column[Option[Boolean]])(implicit shape: Shape[F, T, G]) =
-    dataAndCountSorted(orderBy, countBy, table.where(x => where(x) && filter(x)))
+    val filtered = kq.filters.foldLeft(q)((acc, f) => acc.filter(predicate(_, f)))
+    val sorted = kq.sorter.fold(filtered)(s => filtered.sortBy(ordering(_, s)))
 
-  private def dataAndCountSorted[F, G, T](orderBy: AT => ColumnOrdered[_],
-                                          countBy: AT => F,
-                                          filtered: Query[AT, NothingContainer#TableNothing])(implicit shape: Shape[F, T, G]) = {
-    val sorted = filtered.sortBy(sort(orderBy))
-    val countQuery = Query(filtered.map(countBy).length)
-    val dataQuery = kq.page.fold(sorted.take(1000)) {
-      case Page(s, t) => sorted.drop(s).take(t)
+    val count = Query(filtered.map(countBy)(shape).length)
+    val data = {
+      val p = kq.page getOrElse defaultPage
+      sorted.drop(p.skip).take(p.take)
     }
-    dataQuery -> countQuery
+    data.list -> count.first
   }
 }
