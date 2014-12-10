@@ -6,21 +6,19 @@ import scala.slick.lifted._
 import Operator._
 
 object SlickQuery {
-  def apply[T, E <: AbstractTable[T]](q: Query[E, T, Seq])(implicit p: JdbcProfile) =
-    new SlickQuery(q)(p)
+  implicit def toSlickKendoQuery[T, E <: AbstractTable[T]](
+    q: Query[E, T, Seq])(implicit p: JdbcProfile) = new SlickQuery(q, p)
+
   private val defaultPage = Page(0, 1000)
 }
 
-class SlickQuery[T, E <: AbstractTable[T]] private(q: Query[E, T, Seq])(p: JdbcProfile) {
+class SlickQuery[T, E <: AbstractTable[T]] private(q: Query[E, T, Seq], p: JdbcProfile) {
   import SlickQuery._
   import p.simple._
 
-  private val cache = collection.mutable.Map[String, Node]()
-
-  private def colNode(e: E, field: String) = cache.getOrElseUpdate(field,
+  private def colNode(e: E, field: String) =
     e.getClass.getDeclaredMethod(field).invoke(e)
     .asInstanceOf[Column[_]].toNode
-  )
 
   private def predicate(e: E, f: Filter) = {
     val (c, v) = (colNode(e, f.field), LiteralNode(f.value))
@@ -42,13 +40,14 @@ class SlickQuery[T, E <: AbstractTable[T]] private(q: Query[E, T, Seq])(p: JdbcP
 
   private def ordering(e: E, s: Sorter) = {
     val ordering = s.dir match {
-      case Direction.Asc => Ordering(Ordering.Asc)
-      case Direction.Desc => Ordering(Ordering.Desc)
+      case Direction.Asc => Ordering.Asc
+      case Direction.Desc => Ordering.Desc
     }
-    new Ordered(Seq(colNode(e, s.field) -> ordering))
+    new Ordered(Seq(colNode(e, s.field) -> Ordering(ordering)))
   }
 
-  def page[F, G, T](kq: KendoQuery, countBy: E => F)(implicit shape: Shape[ColumnsShapeLevel, F, T, G], session: Session) = {
+  def page[F, G, T](kq: KendoQuery, countBy: E => F)(
+    implicit shape: Shape[ColumnsShapeLevel, F, T, G], session: Session) = {
 
     val filtered = kq.filters.foldLeft(q)((acc, f) => acc.filter(predicate(_, f)))
     val sorted = kq.sorter.fold(filtered)(s => filtered.sortBy(ordering(_, s)))

@@ -7,6 +7,8 @@ import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.specification.Scope
 import slick.driver.H2Driver
 
+import SlickQuery._
+
 class SlickQuerySpec extends SpecificationWithJUnit {
   val driver = H2Driver
   import driver.simple._
@@ -68,19 +70,15 @@ class SlickQuerySpec extends SpecificationWithJUnit {
   "paged" >> new Case { withTransaction { implicit s =>
     val page = Page(2, 1)
     val kq = KendoQuery(page = Some(page))
-    val sq = SlickQuery(tests.sortBy(_.id))
 
-    val (data, count) = sq.page(kq, _.id)
+    val (data, count) = tests.sortBy(_.id).page(kq, _.id)
     data mustEqual original.drop(page.skip).take(page.take)
     count mustEqual original.length
   }}
 
   "defauls to sort by 'countBy' " >> new Case {
     db withSession { implicit s =>
-      val kq = KendoQuery()
-      val sq = SlickQuery(tests)
-
-      val (data, count) = sq.page(kq, _.id)
+      val (data, count) = tests.page(KendoQuery(), _.id)
       data mustEqual original
       count mustEqual original.length
     }
@@ -89,9 +87,8 @@ class SlickQuerySpec extends SpecificationWithJUnit {
   "sort by last pass status" >> new Case {
     db withSession { implicit s =>
       val kq = KendoQuery(sorter = Some(Sorter("lastRes", Direction.Asc)))
-      val sq = SlickQuery(tests)
 
-      val (data, count) = sq.page(kq, _.id)
+      val (data, count) = tests.page(kq, _.id)
       data.map(_.last) mustEqual original.sortBy { t =>
         t.last.fold("")(identity)
       }.map(_.last)
@@ -104,7 +101,7 @@ class SlickQuerySpec extends SpecificationWithJUnit {
 
     db withSession { implicit s =>
       val (kendoQuery, memQuery) = fixture
-      val actual = SlickQuery(tests.sortBy(_.id)).page(kendoQuery, _.id)
+      val actual = tests.sortBy(_.id).page(kendoQuery, _.id)
       val expected = {
         val exp = original.filter(memQuery)
         (exp, exp.length)
