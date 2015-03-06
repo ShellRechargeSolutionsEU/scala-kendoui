@@ -5,9 +5,6 @@ import org.squeryl.{DummyEnum, PrimitiveTypeMode}
 import org.squeryl.internals.FieldMetaData
 import org.squeryl.dsl.ast.TypedExpressionNode
 
-/**
- * @author Yaroslav Klymko
- */
 class AnyRefMeta(ref: AnyRef) extends PrimitiveTypeMode {
 
   def field(fmd: FieldMetaData): TypedExpressionNode[_] = {

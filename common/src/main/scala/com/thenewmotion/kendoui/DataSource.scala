@@ -8,9 +8,6 @@ import net.liftweb.json.JsonAST.JObject
 import net.liftweb.json.JsonAST.JString
 import net.liftweb.json.JsonDSL._
 
-/**
- * @author Yaroslav Klymko
- */
 object DataSource {
 
   val JsDateFormatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")

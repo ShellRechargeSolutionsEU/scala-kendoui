@@ -1,21 +1,19 @@
 package com.thenewmotion.kendoui
 
+import com.typesafe.scalalogging.slf4j.LazyLogging
+
 import scala.language.implicitConversions
 import org.squeryl._
 import org.squeryl.dsl.ast._
 import org.squeryl.PrimitiveTypeMode._
 import org.squeryl.dsl._
 import org.squeryl.internals.FieldMetaData
-import com.typesafe.scalalogging.slf4j.Logging
 import com.thenewmotion.time.Imports._
 import org.joda.time.format.ISODateTimeFormat
 import com.thenewmotion.kendoui.AnyRefMeta._
 import com.thenewmotion.kendoui.Operator._
 
-/**
- * @author Yaroslav Klymko
- */
-class QueryFromRequest[T <: AnyRef](view: View[T], kq: KendoQuery) extends Logging {
+class QueryFromRequest[T <: AnyRef](view: View[T], kq: KendoQuery) extends LazyLogging {
 
   object MetaData {
     def unapply(field: String): Option[FieldMetaData] =

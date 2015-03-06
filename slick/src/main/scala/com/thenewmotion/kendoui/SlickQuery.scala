@@ -4,6 +4,7 @@ import scala.slick.ast._
 import scala.slick.driver.JdbcProfile
 import scala.slick.lifted._
 import Operator._
+import scala.language.implicitConversions
 
 object SlickQuery {
   implicit def toSlickKendoQuery[T, E <: AbstractTable[T]](

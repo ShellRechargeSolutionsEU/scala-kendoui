@@ -4,9 +4,6 @@ import net.liftweb.http.Req
 import scala.util.Try
 import scalax.StringOption
 
-/**
- * @author Yaroslav Klymko
- */
 object KendoQuery {
   def apply(req: Req): KendoQuery = apply(req.params.collect {
     case (k, List(v)) => k -> v

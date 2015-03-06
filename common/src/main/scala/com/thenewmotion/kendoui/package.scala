@@ -2,9 +2,6 @@ package com.thenewmotion
 
 import net.liftweb.http.Req
 
-/**
- * @author Yaroslav Klymko
- */
 package object kendoui {
   def params(req: Req, field: String): List[String] = {
     val map = req._params
