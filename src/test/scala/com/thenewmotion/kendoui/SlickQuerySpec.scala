@@ -3,13 +3,13 @@ package com.thenewmotion.kendoui
 import java.sql.Timestamp
 
 import org.joda.time.DateTime
-import org.specs2.mutable.SpecificationWithJUnit
+import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
 import slick.driver.H2Driver
 
 import SlickQuery._
 
-class SlickQuerySpec extends SpecificationWithJUnit {
+class SlickQuerySpec extends Specification {
   val driver = H2Driver
   import driver.simple._
 

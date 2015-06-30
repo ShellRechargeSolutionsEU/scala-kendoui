@@ -2,7 +2,6 @@ package com.thenewmotion.kendoui
 
 import net.liftweb.http.Req
 import scala.util.Try
-import scalax.StringOption
 
 object KendoQuery {
   def apply(req: Req): KendoQuery = apply(req.params.collect {
@@ -10,7 +9,7 @@ object KendoQuery {
   })
 
   def apply(params: Map[String, String]): KendoQuery = {
-    def param(x: String): Option[String] = params.get(x).flatMap(StringOption(_))
+    def param(x: String): Option[String] = params.get(x).filter(_.nonEmpty)
 
     def filters(i: Int): List[Filter] = {
       val filter = for {

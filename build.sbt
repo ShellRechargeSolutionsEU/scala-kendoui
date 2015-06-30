@@ -1,53 +1,24 @@
 
-val liftVersion = "2.5.1"
-
-val commonSettings = Seq(
-  organization := "com.thenewmotion",
-  scalaVersion := "2.10.4",
-  libraryDependencies ++= Seq(
-    "com.h2database"                  % "h2"                          % "1.4.186"             % "test",
-    "org.specs2"                      %% "specs2-junit"               % "2.4.17"              % "test"
-  )
-)
-
-lazy val common = project.in(file("common"))
+val `scala-kendoui-slick` = project.in(file("."))
   .enablePlugins(OssLibPlugin)
-  .settings(commonSettings: _*)
   .settings(
-    name := "scala-kendoui-common",
-    libraryDependencies ++= Seq(
-      "com.thenewmotion"                %% "time"                       % "2.8",
-      "com.typesafe.scala-logging"      %% "scala-logging-slf4j"        % "2.1.2",
-      "ua.t3hnar.scalax"                %% "scalax"                     % "1.8",
-      "net.liftweb"                     %% "lift-webkit"                % liftVersion,
-      "net.liftweb"                     %% "lift-json-ext"              % liftVersion
-    )
-  )
+    organization := "com.thenewmotion",
+    name := "scala-kendoui-slick",
+    libraryDependencies ++= {
+      val liftVersion =
+        if (scalaVersion.value startsWith "2.11") "2.6.2"
+        else "2.5.1"
 
-lazy val slick = project
-  .enablePlugins(OssLibPlugin)
-  .dependsOn(common)
-  .settings(commonSettings: _*)
-  .settings(
-    name := "scala-kendoui-slick"
-  )
-  .settings(
-    libraryDependencies ++= Seq(
-      "com.typesafe.slick"              %% "slick"                      % "2.1.0"
-    )
-  )
+      Seq(
+        "com.typesafe.slick" %% "slick" % "2.1.0",
+        "com.thenewmotion" %% "time" % "2.8",
+        "org.slf4j" % "slf4j-api" % "1.7.12",
 
-lazy val squeryl = project
-  .enablePlugins(OssLibPlugin)
-  .dependsOn(common)
-  .settings(commonSettings: _*)
-  .settings(
-    name := "scala-kendoui-squeryl"
-  )
-  .settings(
-    libraryDependencies ++= Seq(
-      "org.squeryl"                     %% "squeryl"                    % "0.9.5-6"
-    )
-  )
+        "net.liftweb" %% "lift-webkit" % liftVersion,
+        "net.liftweb" %% "lift-json-ext" % liftVersion,
 
-packagedArtifacts in file(".") := Map.empty
+        "com.h2database" % "h2" % "1.4.186" % "test",
+        "org.specs2" %% "specs2-core" % "3.6.1" % "test"
+      )
+    }
+  )
