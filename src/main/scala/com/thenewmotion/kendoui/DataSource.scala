@@ -1,16 +1,16 @@
 package com.thenewmotion.kendoui
 
-import com.thenewmotion.time.Imports._
 import java.sql.Timestamp
-import net.liftweb.json.{Extraction, Formats, Serializer, DefaultFormats}
+import java.time.{ZoneId, ZonedDateTime}
+import java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME
+
+import net.liftweb.json.{DefaultFormats, Extraction, Formats, Serializer}
 import net.liftweb.json.JsonAST._
 import net.liftweb.json.JsonAST.JObject
 import net.liftweb.json.JsonAST.JString
 import net.liftweb.json.JsonDSL._
 
 object DataSource {
-
-  val JsDateFormatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
 
   lazy val formats = DefaultFormats + new Serializer[Option[String]] {
     def deserialize(implicit format: Formats) = {
@@ -23,21 +23,21 @@ object DataSource {
       case Some(s: String) => JString(s)
       case None => JNull
     }
-  } + new Serializer[DateTime] {
+  } + new Serializer[ZonedDateTime] {
     def deserialize(implicit format: Formats) = {
-      case (_, JString(dt)) => JsDateFormatter.parseDateTime(dt)
+      case (_, JString(dt)) => ZonedDateTime.parse(dt, ISO_OFFSET_DATE_TIME)
     }
 
     def serialize(implicit format: Formats) = {
-      case dt: DateTime => dt.withZone(DateTimeZone.UTC).toString(JsDateFormatter)
+      case dt: ZonedDateTime => dt.withZoneSameInstant(ZoneId.of("Z")).format(ISO_OFFSET_DATE_TIME)
     }
   } + new Serializer[Timestamp] {
     def deserialize(implicit format: Formats) = {
-      case (_, JString(dt)) => JsDateFormatter.parseDateTime(dt).toTimestamp
+      case (_, JString(dt)) => Timestamp.from(ZonedDateTime.parse(dt, ISO_OFFSET_DATE_TIME).toInstant)
     }
 
     def serialize(implicit format: Formats) = {
-      case dt: Timestamp => dt.toDateTime.withZone(DateTimeZone.UTC).toString(JsDateFormatter)
+      case dt: Timestamp => ZonedDateTime.ofInstant(dt.toInstant, ZoneId.of("Z")).format(ISO_OFFSET_DATE_TIME)
     }
   }
 
