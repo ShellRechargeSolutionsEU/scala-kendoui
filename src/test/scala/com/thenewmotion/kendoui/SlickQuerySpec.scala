@@ -35,7 +35,7 @@ class SlickQuerySpec extends Specification {
 
   val tests = TableQuery[Test]
   val db = Database.forURL(
-    "jdbc:h2:mem:test;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=FALSE;MVCC=TRUE",
+    "jdbc:h2:mem:test;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=FALSE",
     driver = "org.h2.Driver")
   object dt {
     val now = DateTime.now
